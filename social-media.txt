@@ -1,0 +1,270 @@
+MERN Stack Social Media App - Project Plan
+
+            🔐Auth & User Management
+ 
+ POST    /auth/register         Register a new user
+ POST    /auth/login            Login user (JWT-based)
+ GET     /auth/me               Get current logged-in user
+ PUT     /auth/profile          Update user profile
+ GET     /auth/users            (Admin) Get all users
+ PUT     /auth/users/:id/block  (Admin) Block a user
+ PUT     /auth/users/:id/unblock (Admin) Unblock a user
+
+                 📝 Post Management
+
+ POST    /posts                 Create a new post
+ GET     /posts                 Get all public posts
+ GET     /posts/:id            Get post details
+ PUT     /posts/:id            Update own post
+ DELETE  /posts/:id            Delete own post
+ GET     /posts/user/:userId   Get posts by a user
+
+                  ❤️Likes & Comments
+
+ POST    /posts/:id/like        Like a post
+ POST    /posts/:id/unlike      Unlike a post
+ POST    /posts/:id/comment     Add comment
+ DELETE  /posts/:postId/comments/:commentId  Delete comment
+
+
+                    👥Follow System
+
+
+ POST    /users/:id/follow      Follow a user
+ POST    /users/:id/unfollow    Unfollow a user
+ GET     /users/:id/followers   Get list of followers
+ GET     /users/:id/following   Get list of following
+
+                    🗂️File Uploads
+
+ POST    /upload/avatar         Upload profile picture
+ POST    /upload/post           Upload post image
+ GET     /uploads/:filename     Serve uploaded file
+
+                    🔔Notifications
+                    
+ GET     /notifications         Get user notifications
+ DELETE  /notifications/:id     Mark or delete notification
+
+
+                    🗂️back-end Folder Structure
+
+  backend/
+├── controllers/
+│   ├── authController.js
+│   ├── postController.js
+│   ├── userController.js
+│   ├── commentController.js
+│   ├── notificationController.js
+│   └── adminController.js
+├── models/
+│   ├── User.js
+│   ├── Post.js
+│   ├── Comment.js
+│   ├── Notification.js
+├── routes/
+│   ├── auth.js
+│   ├── posts.js
+│   ├── users.js
+│   ├── comments.js
+│   ├── notifications.js
+│   └── admin.js
+├── middleware/
+│   ├── authMiddleware.js
+│   ├── roleMiddleware.js
+│   └── errorHandler.js
+├── utils/
+│   ├── upload.js
+├── config/
+│   └── db.js
+├── uploads/
+├── .env
+├── server.js
+└── package.json
+                   
+                MongoDB Schemas
+
+
+            User.js:
+
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: { type: String, unique: true },
+  password: String,
+  avatar: String,
+  bio: String,
+  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  isBlocked: { type: Boolean, default: false },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' }
+}, { timestamps: true });
+
+module.exports = mongoose.model('User', userSchema);
+
+
+
+                Post.js:
+
+const mongoose = require('mongoose');
+
+const postSchema = new mongoose.Schema({
+  caption: String,
+  image: String,
+  author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]
+  tags: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Tag' }]
+}, { timestamps: true });
+
+module.exports = mongoose.model('Post', postSchema);
+
+
+
+            Comment.js:
+const mongoose = require('mongoose');
+
+const commentSchema = new mongoose.Schema({
+  text: String,
+  author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  post: { type: mongoose.Schema.Types.ObjectId, ref: 'Post' }
+}, { timestamps: true });
+
+module.exports = mongoose.model('Comment', commentSchema);
+
+
+            Notification.js:
+
+const mongoose = require('mongoose');
+
+const notificationSchema = new mongoose.Schema({
+  toUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  message: String,
+  isRead: { type: Boolean, default: false }
+}, { timestamps: true });
+
+module.exports = mongoose.model('Notification', notificationSchema);
+
+              tag.js:(optional:)
+
+const mongoose = require('mongoose');
+
+const tagSchema = new mongoose.Schema({
+  name: { type: String, unique: true, lowercase: true, trim: true },
+  description: String,
+  usageCount: { type: Number, default: 0 }
+}, { timestamps: true });
+
+module.exports = mongoose.model('Tag', tagSchema);
+
+
+            ✅route
+
+routes/
+├── auth.js
+├── users.js
+├── posts.js
+├── comments.js
+├── notifications.js
+├── tags.js       ← (optional if you use Tag schema)
+├── messages.js   ← (if you add DM feature later)
+
+
+                 📄1.auth.js
+
+const express = require('express');
+const router = express.Router();
+const authController = require('../controllers/authController');
+
+router.post('/register', authController.register);
+router.post('/login', authController.login);
+router.get('/me', authController.getMe);
+router.put('/profile', authController.updateProfile);
+
+module.exports = router;
+
+                    📄2.users.js
+
+const express = require('express');
+const router = express.Router();
+const userController = require('../controllers/userController');
+
+router.get('/', userController.getAllUsers);
+router.get('/:id', userController.getUserById);
+router.put('/:id/follow', userController.followUser);
+router.put('/:id/unfollow', userController.unfollowUser);
+router.put('/:id/block', userController.blockUser);
+router.put('/:id/unblock', userController.unblockUser);
+
+module.exports = router;
+
+
+                      📄3.posts.js
+
+ const express = require('express');
+const router = express.Router();
+const postController = require('../controllers/postController');
+
+router.post('/', postController.createPost);
+router.get('/', postController.getAllPosts);
+router.get('/:id', postController.getPostById);
+router.put('/:id', postController.updatePost);
+router.delete('/:id', postController.deletePost);
+
+router.put('/:id/like', postController.likePost);
+router.put('/:id/unlike', postController.unlikePost);
+
+module.exports = router;
+
+
+                        📄4.comments.js
+
+const express = require('express');
+const router = express.Router();
+const commentController = require('../controllers/commentController');
+
+router.post('/:postId', commentController.addComment);
+router.delete('/:id', commentController.deleteComment);
+
+module.exports = router;
+
+
+                        📄5.notifications.js
+
+const express = require('express');
+const router = express.Router();
+const notificationController = require('../controllers/notificationController');
+
+router.get('/', notificationController.getNotifications);
+router.delete('/:id', notificationController.deleteNotification);
+
+module.exports = router;
+
+
+                        📄6.tags.js(optional)
+
+const express = require('express');
+const router = express.Router();
+const tagController = require('../controllers/tagController');
+
+router.get('/', tagController.getAllTags);
+router.post('/', tagController.createTag);
+router.delete('/:id', tagController.deleteTag);
+
+module.exports = router;
+
+
+                    🧩Connecting all routes in server.js:
+
+const express = require('express');
+const app = express();
+
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/posts', require('./routes/posts'));
+app.use('/api/comments', require('./routes/comments'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/tags', require('./routes/tags'));
+
+module.exports = app;
